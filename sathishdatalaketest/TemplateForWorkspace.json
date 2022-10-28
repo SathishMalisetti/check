@@ -173,7 +173,11 @@
 								"referenceName": "DelimitedText1",
 								"type": "DatasetReference"
 							},
-							"name": "sink1"
+							"name": "sink1",
+							"rejectedDataLinkedService": {
+								"referenceName": "sathishdatalaketest-WorkspaceDefaultStorage",
+								"type": "LinkedServiceReference"
+							}
 						}
 					],
 					"transformations": [],
@@ -201,7 +205,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/datasets/DelimitedText1')]"
+				"[concat(variables('workspaceId'), '/datasets/DelimitedText1')]",
+				"[concat(variables('workspaceId'), '/linkedServices/sathishdatalaketest-WorkspaceDefaultStorage')]"
 			]
 		},
 		{
