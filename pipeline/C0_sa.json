@@ -1,0 +1,35 @@
+{
+	"name": "C0_sa",
+	"properties": {
+		"activities": [
+			{
+				"name": "sa_Table_1_DataFlow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "sa_Table_1_DataFlow",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"concurrency": 1,
+		"folder": {
+			"name": "sa"
+		},
+		"annotations": []
+	}
+}

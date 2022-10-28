@@ -1,0 +1,31 @@
+{
+	"name": "sa_Table_1_DataFlow",
+	"properties": {
+		"folder": {
+			"name": "sa"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "sathishdatalaketest-WorkspaceDefaultStorage",
+						"type": "LinkedServiceReference"
+					},
+					"name": "MapInputSource"
+				}
+			],
+			"sinks": [
+				{
+					"name": "Table1Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectTable1"
+				}
+			],
+			"script": "source(output(\n\t\tlatitude as short,\n\t\tlongitude as short\n\t),\n\tuseSchema: false,\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'delimited',\n\tfileSystem: 'inputfiles',\n\tfileName: 'MapInput.csv',\n\tcolumnDelimiter: ',',\n\tescapeChar: '\\\\',\n\tquoteChar: '\\\"',\n\tcolumnNamesAsHeader: true) ~> MapInputSource\nMapInputSource select(mapColumn(\n\t\tColumn_1 = latitude,\n\t\tColumn_2 = longitude,\n\t\tColumn_3 = latitude\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectTable1\nSelectTable1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tstore: 'synapse',\n\tdatabaseType: 'spark',\n\tformat: 'table',\n\tdatabase: 'Database1',\n\ttableName: 'Table_1',\n\tinput(\n\t\tColumn_1 as string,\n\t\tColumn_2 as string,\n\t\tColumn_3 as string\n\t)) ~> Table1Sink"
+		}
+	}
+}

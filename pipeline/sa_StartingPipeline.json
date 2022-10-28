@@ -1,0 +1,24 @@
+{
+	"name": "sa_StartingPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "C0_sa",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "C0_sa",
+						"type": "PipelineReference"
+					}
+				}
+			}
+		],
+		"concurrency": 1,
+		"folder": {
+			"name": "sa"
+		},
+		"annotations": []
+	}
+}
