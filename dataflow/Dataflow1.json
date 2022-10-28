@@ -14,7 +14,11 @@
 						"referenceName": "DelimitedText1",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "sathishdatalaketest-WorkspaceDefaultStorage",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [],
