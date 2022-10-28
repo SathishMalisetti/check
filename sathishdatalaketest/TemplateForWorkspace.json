@@ -22,6 +22,65 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('workspaceName'), '/sa')]",
+			"type": "Microsoft.Synapse/workspaces/dataMappers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sathishdatalaketest-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/C0_sa')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "sa_Table_1_DataFlow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "sa_Table_1_DataFlow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"MapInputSource": {},
+									"Table1Sink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"concurrency": 1,
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "sa"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/dataflows/sa_Table_1_DataFlow')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Pipeline 1')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -66,6 +125,40 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/dataflows/Dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sa_StartingPipeline')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "C0_sa",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "C0_sa",
+								"type": "PipelineReference"
+							},
+							"parameters": {}
+						}
+					}
+				],
+				"concurrency": 1,
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "sa"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/C0_sa')]"
 			]
 		},
 		{
@@ -211,6 +304,42 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sa_Table_1_DataFlow')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "sa"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "sathishdatalaketest-WorkspaceDefaultStorage",
+								"type": "LinkedServiceReference"
+							},
+							"name": "MapInputSource"
+						}
+					],
+					"sinks": [
+						{
+							"name": "Table1Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectTable1"
+						}
+					],
+					"script": "source(output(\n\t\tlatitude as short,\n\t\tlongitude as short\n\t),\n\tuseSchema: false,\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'delimited',\n\tfileSystem: 'inputfiles',\n\tfileName: 'MapInput.csv',\n\tcolumnDelimiter: ',',\n\tescapeChar: '\\\\',\n\tquoteChar: '\\\"',\n\tcolumnNamesAsHeader: true) ~> MapInputSource\nMapInputSource select(mapColumn(\n\t\tColumn_1 = latitude,\n\t\tColumn_2 = longitude,\n\t\tColumn_3 = latitude\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectTable1\nSelectTable1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tstore: 'synapse',\n\tdatabaseType: 'spark',\n\tformat: 'table',\n\tdatabase: 'Database1',\n\ttableName: 'Table_1',\n\tinput(\n\t\tColumn_1 as string,\n\t\tColumn_2 as string,\n\t\tColumn_3 as string\n\t)) ~> Table1Sink"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sathishdatalaketest-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
 			"type": "Microsoft.Synapse/workspaces/credentials",
 			"apiVersion": "2019-06-01-preview",
@@ -288,8 +417,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectName",
@@ -308,8 +436,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectName"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectDescription",
@@ -328,8 +455,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectDescription"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectTypeId",
@@ -348,8 +474,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectTypeId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectPlannedStartTimestamp",
@@ -369,8 +494,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectPlannedStartTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectPlannedEndTimestamp",
@@ -390,8 +514,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectPlannedEndTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectEarliestStartTimestamp",
@@ -411,8 +534,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectEarliestStartTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectEarliestEndTimestamp",
@@ -432,8 +554,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectEarliestEndTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectLatestStartTimestamp",
@@ -453,8 +574,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectLatestStartTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectLatestEndTimestamp",
@@ -474,8 +594,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectLatestEndTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectClosingTimestamp",
@@ -495,8 +614,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectClosingTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectRiskAssessmentStatement",
@@ -515,8 +633,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectRiskAssessmentStatement"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectWorkStatement",
@@ -535,8 +652,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectWorkStatement"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectCharterStatement",
@@ -555,8 +671,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectCharterStatement"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "BusinessCaseStatement",
@@ -575,8 +690,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "BusinessCaseStatement"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "LocationId",
@@ -595,8 +709,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "LocationId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectGlAccountNumber",
@@ -615,8 +728,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectGlAccountNumber"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ResponsibilityCenterId",
@@ -635,8 +747,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ResponsibilityCenterId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ProjectNote",
@@ -655,8 +766,7 @@
 										"BaseAttributeReference": {
 											"Entity": "Project.cdm.json/Project",
 											"Name": "ProjectNote"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									}
 								],
 								"ColumnSetEntityName": "29ca0e46-1f09-4d32-b4f6-e55a012c3059",
@@ -668,8 +778,8 @@
 									"Properties": {
 										"path": "abfss://sftpfolder@sathishstoragesftp.dfs.core.windows.net/Database1/Project",
 										"delimiter": ",",
-										"multiLine": "false",
 										"firstRowAsHeader": "false",
+										"multiLine": "false",
 										"serialization.format": "1",
 										"escape": "\\",
 										"quote": "\"",
@@ -758,8 +868,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ProjectId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityId",
@@ -778,8 +887,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityName",
@@ -798,8 +906,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityName"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityDescription",
@@ -818,8 +925,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityDescription"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityPlannedStartTimestamp",
@@ -839,8 +945,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityPlannedStartTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityActualStartTimestamp",
@@ -860,8 +965,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityActualStartTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityPlannedEndTimestamp",
@@ -881,8 +985,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityPlannedEndTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "ActivityActualEndTimestamp",
@@ -902,8 +1005,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectActivity.cdm.json/ProjectActivity",
 											"Name": "ActivityActualEndTimestamp"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									}
 								],
 								"ColumnSetEntityName": "66d2390d-8586-4010-8d42-c11b5758657e",
@@ -915,8 +1017,8 @@
 									"Properties": {
 										"path": "abfss://sftpfolder@sathishstoragesftp.dfs.core.windows.net/Database1/ProjectActivity",
 										"delimiter": ",",
-										"multiLine": "false",
 										"firstRowAsHeader": "false",
+										"multiLine": "false",
 										"serialization.format": "1",
 										"escape": "\\",
 										"quote": "\"",
@@ -1005,8 +1107,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectBudget.cdm.json/ProjectBudget",
 											"Name": "ProjectBudgetId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "PeriodStartDate",
@@ -1026,8 +1127,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectBudget.cdm.json/ProjectBudget",
 											"Name": "PeriodStartDate"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "PeriodEndDate",
@@ -1047,8 +1147,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectBudget.cdm.json/ProjectBudget",
 											"Name": "PeriodEndDate"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "PartyId",
@@ -1067,8 +1166,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectBudget.cdm.json/ProjectBudget",
 											"Name": "PartyId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "OrganizationId",
@@ -1087,8 +1185,7 @@
 										"BaseAttributeReference": {
 											"Entity": "ProjectBudget.cdm.json/ProjectBudget",
 											"Name": "OrganizationId"
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									}
 								],
 								"ColumnSetEntityName": "9ec5dab5-12b7-4c1f-b0ee-457d0aa573f6",
@@ -1100,8 +1197,8 @@
 									"Properties": {
 										"path": "abfss://sftpfolder@sathishstoragesftp.dfs.core.windows.net/Database1/ProjectBudget",
 										"delimiter": ",",
-										"multiLine": "false",
 										"firstRowAsHeader": "false",
+										"multiLine": "false",
 										"serialization.format": "1",
 										"escape": "\\",
 										"quote": "\"",
@@ -1188,8 +1285,7 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "Column_2",
@@ -1202,8 +1298,7 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									},
 									{
 										"Name": "Column_3",
@@ -1216,8 +1311,7 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										},
-										"DeltaFormatInvalidMessages": []
+										}
 									}
 								],
 								"ColumnSetEntityName": "2d01213d-cb39-4aad-be33-b6ba14298e78",
@@ -1229,8 +1323,8 @@
 									"Properties": {
 										"path": "abfss://sftpfolder@sathishstoragesftp.dfs.core.windows.net/Database1/Table_1",
 										"delimiter": ",",
-										"multiLine": "false",
 										"firstRowAsHeader": "false",
+										"multiLine": "false",
 										"serialization.format": "1",
 										"escape": "\\",
 										"quote": "\"",
